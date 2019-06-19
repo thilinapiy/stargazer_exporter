@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -21,7 +22,7 @@ var (
 
 	oldStats     []stargazer.MissesBlock
 	blockAddress = kingpin.Flag("block-address", "Hash address of the block that needs to monitor").Required().String()
-	bindPort     = kingpin.Flag("bind-port", "Port which listens for promethius to scrape").Default(":9119").String()
+	bindPort     = kingpin.Flag("bind-port", "Port which listens for prometheus to scrape").Default(":9119").String()
 	chatID       = kingpin.Flag("chat-id", "Telegram chat group id").Required().String()
 	token        = kingpin.Flag("bot-token", "Telegram bot secret token").Required().String()
 )
@@ -117,9 +118,14 @@ func sendMessage(msg []stargazer.MissesBlock, alert bool) bool {
 
 	url := "https://api.telegram.org/bot" + *token + "/sendMessage"
 
+	msgBuff := "New missed block detected.\n"
+	for _, block := range msg {
+		msgBuff += fmt.Sprintf("First block: %s, Last block: %s, count %s\n", block.StartHeight, block.EndHeight, block.Count)
+	}
+
 	body := map[string]interface{}{
 		"chat_id":              chatID,
-		"text":                 msg,
+		"text":                 msgBuff,
 		"disable_notification": alert,
 	}
 
